@@ -26,8 +26,28 @@ function App() {
   const [retouchPrompt, setRetouchPrompt] = useState(
     "Analyze this coloring book line art image. Identify issues like: broken lines, noise, uneven line thickness, or unclear edges. Suggest processing techniques from: denoise, sharpen, connect_lines, smooth_edges. Reply with only comma-separated keywords."
   )
+  const [geminiApiKey, setGeminiApiKey] = useState(() => {
+    // Load API key from localStorage or use environment variable as fallback
+    return localStorage.getItem('gemini_api_key') || import.meta.env.VITE_GEMINI_API_KEY || ''
+  })
   const animationIdRef = useRef(null)
   const frameCountRef = useRef(0)
+
+  // Save API key to localStorage when it changes
+  useEffect(() => {
+    if (geminiApiKey) {
+      localStorage.setItem('gemini_api_key', geminiApiKey)
+    }
+  }, [geminiApiKey])
+
+  // Handle API key change
+  const handleApiKeyChange = (e) => {
+    const newKey = e.target.value.trim()
+    setGeminiApiKey(newKey)
+    if (newKey) {
+      addLog('🔑 Gemini API key updated', 'success')
+    }
+  }
 
   // Processing parameters
   const [params, setParams] = useState({
@@ -903,10 +923,10 @@ function App() {
         isConvert
       })
 
-      // Get Gemini API key from environment
-      const apiKey = import.meta.env.VITE_GEMINI_API_KEY
+      // Get Gemini API key from state
+      const apiKey = geminiApiKey
       if (!apiKey) {
-        throw new Error('Gemini API key not found')
+        throw new Error('Gemini API key not found. Please add your API key in Settings.')
       }
 
       // Use Gemini Image Generation for ALL original images (uploaded OR captured)
@@ -1238,6 +1258,35 @@ function App() {
             {/* Settings Tab */}
             {sidebarTab === 'settings' && (
               <>
+                {/* Gemini API Key Section */}
+                <div className="sidebar-section">
+                  <h3 className="section-title">🔑 Gemini API Key</h3>
+                  <input
+                    type="password"
+                    value={geminiApiKey}
+                    onChange={handleApiKeyChange}
+                    className="api-key-input"
+                    placeholder="Enter your Gemini API key..."
+                    style={{
+                      width: '100%',
+                      padding: '10px',
+                      fontSize: '13px',
+                      border: '1px solid #ddd',
+                      borderRadius: '6px',
+                      fontFamily: 'monospace',
+                      backgroundColor: geminiApiKey ? '#f0fff4' : '#fff'
+                    }}
+                  />
+                  <p className="param-hint" style={{ marginTop: '8px', fontSize: '11px', color: '#666' }}>
+                    Get your free API key from <a href="https://makersuite.google.com/app/apikey" target="_blank" rel="noopener noreferrer" style={{ color: '#4285f4', textDecoration: 'underline' }}>Google AI Studio</a>
+                  </p>
+                  {!geminiApiKey && (
+                    <p className="param-hint" style={{ marginTop: '4px', fontSize: '11px', color: '#dc2626', fontWeight: 'bold' }}>
+                      ⚠️ API key required for AI features
+                    </p>
+                  )}
+                </div>
+
                 {/* Camera Selection Section */}
                 <div className="sidebar-section camera-section">
                   <h3 className="section-title">Camera</h3>
